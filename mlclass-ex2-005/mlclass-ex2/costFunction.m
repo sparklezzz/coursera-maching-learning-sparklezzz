@@ -49,8 +49,8 @@ J = sum(- y .* log(hx_vec) - (1 - y) .* log(ones(m,1) - hx_vec)) / m;
 grad = (X' * (hx_vec - y)) / m;
 
 
-fprintf("J: %f\n", J);
-fprintf("grad: %f\n", grad);
+%fprintf("J: %f\n", J);
+%fprintf("grad: %f\n", grad);
 
 % =============================================================
 
