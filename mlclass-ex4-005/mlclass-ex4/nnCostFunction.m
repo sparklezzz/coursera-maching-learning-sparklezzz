@@ -63,22 +63,94 @@ Theta2_grad = zeros(size(Theta2));
 %
 
 
+% Theta1 has size 25 x 401
+% Theta2 has size 10 x 26
 
+% Calculate unregularized J
 
+% expand_X: 5000 * 401
+expand_X = [ones(m,1) X];
 
+z2 = expand_X * Theta1';
 
+% hidden_layer: 5000 * 25
+hidden_layer = sigmoid(z2);
 
+% expand_hidden_layer: 5000 * 26
+expand_hidden_layer = [ones(m,1) hidden_layer];
 
+z3 = expand_hidden_layer * Theta2';
 
+% output_layer: 5000 * 10
+output_layer = sigmoid(z3);
 
+% recode the output label to 0-1 vector(only one element is 1 in a row vector)
+y_recode = zeros(m, num_labels);
 
+for i = 1:m
+    y_recode(i, uint32(y(i))) = 1;
+endfor
 
+for i = 1:m
+    %fprintf("y_recode: %f\n", size(y_recode(i,:)));
+    %fprintf("output_layer: %f\n", size(output_layer(i,:)'));
+    tempSum = sum(- y_recode(i,:) .* log(output_layer(i,:)) - ...
+              (1 - y_recode(i,:)) .* log(1 - output_layer(i,:)));
+    J += tempSum;
+endfor
 
+J = (1/m) * J;
 
+%fprintf("Unregularized J: %f\n", J);
 
+% Calculate regularized J
 
+regularization = 0;
+Theta1_no_bias = Theta1;
+Theta1_no_bias(:,1) = zeros(hidden_layer_size, 1);
 
+Theta2_no_bias = Theta2;
+Theta2_no_bias(:,1) = zeros(num_labels, 1);
 
+regularization += sum(Theta1_no_bias(:) .^ 2) + sum(Theta2_no_bias(:) .^ 2);
+
+J += (lambda / (2 * m)) * regularization;
+
+%fprintf("Regularized J: %f\n", J);
+
+% Calulate gradient
+
+% accum_grad1: 25 * 401
+accum_grad1 = zeros(hidden_layer_size, input_layer_size+1);
+% accum_grad2: 10 * 26
+accum_grad2 = zeros(num_labels, hidden_layer_size+1);
+for i = 1:m
+    % delta3: 1 * 10
+    delta3 = output_layer(i,:) - y_recode(i,:); 
+    % Theta2: 10 * 26, z2: 5000 * 25
+    % delta2: 1 * 25
+    delta2 = (delta3 * Theta2)(2:end) .* sigmoidGradient(z2(i,:));
+
+    accum_grad1 += delta2' * expand_X(i,:);
+    accum_grad2 += delta3' * expand_hidden_layer(i,:);
+
+endfor
+
+accum_grad1 = (1/m) * accum_grad1;
+accum_grad2 = (1/m) * accum_grad2;
+
+Theta1_grad += accum_grad1;
+Theta2_grad += accum_grad2;
+
+% regularized grad
+
+reg_part_grad1 = (lambda / m) * Theta1;
+reg_part_grad1(:,1) = zeros(hidden_layer_size,1);
+reg_part_grad2 = (lambda / m) * Theta2;
+reg_part_grad2(:,1) = zeros(num_labels,1);
+
+Theta1_grad += reg_part_grad1;
+Theta2_grad += reg_part_grad2;
 
 % -------------------------------------------------------------
 
