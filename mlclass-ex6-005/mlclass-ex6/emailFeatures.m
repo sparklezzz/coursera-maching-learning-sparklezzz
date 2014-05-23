@@ -48,11 +48,10 @@ x = zeros(n, 1);
 %
 %
 
-
-
-
-
-
+for i = 1:length(word_indices)
+    % note that x is a boolean vector, do not use += (though int vec may boost the test accurary)
+    x(word_indices(i)) = 1;
+end
 
 
 % =========================================================================
